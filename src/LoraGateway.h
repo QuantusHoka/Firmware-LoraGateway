@@ -8,9 +8,9 @@ enum LoRaAddresses {LORA_YURT_ADDRESS, LORA_POWER_TRAILER_ADDRESS, LORA_BROADCAS
 
 //Pin Assignments
 //Outputs
-#define RED_LED_PIN D7 //high = on; will use pwm
-#define BLUE_LED_PIN D2 //high = on; will use pwm
-#define GREEN_LED_PIN D3 //high = on; will use pwm
+#define RED_LED_PIN GPIO_NUM_14 //high = on; will use pwm
+#define BLUE_LED_PIN GPIO_NUM_27 //high = on; will use pwm
+#define GREEN_LED_PIN GPIO_NUM_15 //high = on; will use pwm
 
 //SPI
 #define SCK_PIN SCK
@@ -18,9 +18,9 @@ enum LoRaAddresses {LORA_YURT_ADDRESS, LORA_POWER_TRAILER_ADDRESS, LORA_BROADCAS
 #define MOSI_PIN MOSI
 
 //RFM
-#define DIO0_PIN D9 //RFM95 DIO0
-#define RST_PIN D6 //RFM95 RST
-#define NSS_PIN GPIO_NUM_4 //RFM95 NSS
+#define DIO0_PIN GPIO_NUM_33 //RFM95 DIO0
+#define RST_PIN GPIO_NUM_32 //RFM95 RST
+#define NSS_PIN GPIO_NUM_5 //RFM95 NSS
 
 //INPUTS
 #define BUTTON_PIN A4 //High = pressed
