@@ -1,24 +1,14 @@
-/* TODO before putting into production
-    1. Remove requirement for task handles, as these are not required for normal use
+/*
+1. Declare a const array of leds.
+    const DMC_LED_t array_of_leds[] = {{LED1 stuff}, {LED2 Stuff}, ...};
+2. Pass array to a new DMC_LED_CONTROL instance
+3. Use public member functions to manipulate LED function
+
+
+add const to the LED_CONTROL constrctor
+for now, the LED controller only allows 8 pwm leds
 */
 
-
-/* LED Library using FreeRTOS.
-    Allows simple control of LEDs by passing simple commands into the LED command queue
-    Use
-    1. Globals
-        a. Create a static instance of a dmcLed_t object
-         dmcLed_t(NAME, GPIO_NUM, dmcLedType, PWM Channel, inverted);
-
-    2. Setup
-        a. Create the task by calling DMCLedTaskCreate( instance.name, &instance, &instance.taskHandle)
-    3. When passing data in the queue:
-        a. Create an instance of DMCLedCommand
-        b. Set DMCLedCommand instance stuff:
-            1. Command code. One of: DMCLedCommandOn, DMCLedCommandOff, DMCLedCommandBlink, DMCLedCommandPWM
-            2. Value: Number of blinks, or dutycycle percent (0-100). Ignored if LED type is on/off
-        Send commands to dmcLed_t_instance.inputQueue 
-*/
 
 #ifndef DMC_LED_H
 #define DMC_LED_H
@@ -27,52 +17,81 @@
 
 //LED Defaults
 #define LED_PWM_RESOLUTION 8U
-#define LED_PULSE_LONG 2850 //ms
-#define LED_PULSE_SHORT 150 //ms
-#define LED_DEFAULT_DIM 128U
-#define LED_DEFAULT_BRIGHT 255U
-
-#define LED_CONTROL_STACK_DEPTH 0x800
-#define LED_CONTROL_TASK_PRIORITY 4U
+#define LED_DEFAULT_DIM_SETTING 128U
+#define LED_DEFAULT_BRIGHT_SETTING 255U
+#define LED_DEFAULT_PULSE_LENGTH 500U //ms
+#define LED_UPDATE_INTERVAL 10U //ms
+#define LED_MAX_PWM_LEDS 8
+#define LED_ONOFF_PIN_CHANNEL 255
+#define TIMER_TIMEOUT 1000 //ms
 
 typedef enum {
-    Led_state_off,
-    Led_state_dim,
-    Led_state_bright,
-    Led_state_dimpulse,
-    Led_state_brightpulse,
-    Led_state_tempset,
-    Led_event_timerexpired,
-    Led_event_resume,
-    Led_set_dim,
-    Led_set_bright
-} LedOperation_t;
+    led_mode_off,
+    led_mode_on,
+    led_mode_blink,
+    led_mode_dim,
+    led_mode_bright,
+    led_mode_dim_blink,
+    led_mode_bright_blink,
+    led_mode_pulse
+} LedMode_t;
 
-struct LedEvent_t {
-    LedOperation_t code;
-    uint32_t value;
+typedef enum {
+    led_state_off,
+    led_state_dim,
+    led_state_bright,
+    led_state_on
+} LedState_t;
 
-    LedEvent_t(LedOperation_t o = Led_state_off, uint32_t v = 0U): code(o), value(v){}
+typedef enum {
+    led_type_onoff,
+    led_type_pwm
+} LedType_t;
+
+typedef enum {
+    led_OK = 0,
+    led_error_too_many_pwm,
+    led_error_timer_create_failed,
+    led_invalid_mode_command
+} LedError_t;
+
+struct DMC_Led{
+    uint8_t pin;
+    LedType_t type;
+    bool inverted;
 };
 
-struct DMC_LED
+class DMCLedController
 {
-    char Name[16];
-    uint8_t Pin;
-    uint8_t Channel;
-    bool Dim, LongPulse, temp;
-    LedOperation_t operation;
-    uint32_t LEDDim, LEDBright;
-    TimerHandle_t ShortTimerHandle, LongTimerHandle;
-    QueueHandle_t EventQueue;
+    public:
+    DMCLedController(const char *t_name, DMC_Led *t_leds);
+    ~DMCLedController(void);
+    BaseType_t begin(void);
+    LedError_t update(void);
+    LedError_t setBright(int t_id, int t_brightSet);
+    LedError_t setDim(int t_id, int t_dimSet);
+    LedError_t setMode(int t_id, LedMode_t t_mode);
+    LedError_t setOnTime(int t_id, uint32_t t_onTime);
+    LedError_t setOffTime(int t_id, uint32_t t_offTime);
+    TimerHandle_t getTimerHandle(void);
 
-    DMC_LED(const char* n, uint8_t p, uint8_t c);
-    void begin();
-    void dispatch(LedEvent_t const *e);
+    private:
+    DMC_Led *m_led;
+    int m_numLeds;
+    TimerHandle_t m_timerHandle;
+    LedError_t m_err;
+    uint8_t *m_channel;
+    uint8_t *m_brightSet;
+    uint8_t *m_dimSet;
+    uint8_t *m_on;
+    uint8_t *m_off;
+    TickType_t *m_onTime;
+    TickType_t *m_offTime;
+    TickType_t *m_nextChangeTickCount;
+    uint8_t *m_mode;
+    uint8_t *m_state;
+
 };
 
-void timer_DMCLedCallback(TimerHandle_t xtimer);
-
-void task_DMCLedControl(void *params);
-
+void ledTimerCallback (TimerHandle_t t_xTimer);
 #endif

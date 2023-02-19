@@ -20,6 +20,9 @@ TimerHandle_t wifiReconnectTimer;
 
 QueueHandle_t SystemEventQueue;
 
+DMC_Led LEDS[] = {
+                  {LED_BUILTIN, LedType_t::led_type_onoff, false}, //builtin led
+                  {GPIO_NUM_13, LedType_t::led_type_pwm, false}}; //green led on gpio 13
 
 //LED Setup
 DMC_LED RedLed("RedLed", RED_LED_PIN, RED_LED_CHANNEL);
